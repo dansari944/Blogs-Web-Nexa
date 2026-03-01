@@ -1,44 +1,27 @@
 const mongoose = require("mongoose");
 
-const BlogSchema = new mongoose.Schema(
-  {
+const BlogSchema = new mongoose.Schema({
     title: { type: String, required: true },
-
+    userId: { type: String, required: true, ref: "User" },
     slug: { type: String, unique: true, index: true },
-
-    // Supports editor like Quill / TipTap / EditorJS
     content: { type: Object, required: true },
-
     excerpt: { type: String, maxlength: 300 },
-
-    coverImage: String,
-
-    category: {
-      type: String,
-      index: true,
-    },
-
+    coverImage: { type: String },
+    authorName: { type: String, default: "Anonymous" },
+    category: { type: String, required: true, },
+    categorySlug: { type: String, required: true, },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+    subCategory: { type: String, index: true },
+    subCategorySlug: { type: String, index: true },
+    subCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: "SubCategory" },
     tags: [{ type: String, index: true }],
-
-    seo: {
-      metaTitle: { type: String, maxlength: 60 },
-      metaDescription: { type: String, maxlength: 160 },
-    },
-
+    seoMetaTitle: { type: String, maxlength: 60 },
+    seoMetaDescription: { type: String, maxlength: 160 },
     published: { type: Boolean, default: false },
-
-    publishedAt: Date,
-
+    publishedAt: { type: Date },
     views: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
-
-// 🔍 Full-text search (title + excerpt)
-BlogSchema.index({
-  title: "text",
-  excerpt: "text",
-  tags: "text",
-});
 
 module.exports = mongoose.model("Blog", BlogSchema);
