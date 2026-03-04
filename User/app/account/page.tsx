@@ -13,7 +13,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 export default function AccountSettings() {
   const [tab, setTab] = useState("profile");
   const [loading, setLoading] = useState(false);
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [otpModal, setOtpModal] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
@@ -43,7 +43,6 @@ export default function AccountSettings() {
     country: "",
     phoneVerified: false,
     isVerified: false,
-
   });
   const [image, setImage] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
@@ -93,10 +92,15 @@ export default function AccountSettings() {
             Authorization: `Bearer ${session?.backendToken}`,
           },
           body: JSON.stringify(preferences),
-        }
+        },
       );
-
       const data = await res.json();
+      await update({
+        user: {
+          ...session?.user,
+          preferences: data.preferences.darkMode,
+        },
+      });
 
       if (!res.ok) throw new Error(data.message);
 
@@ -216,20 +220,22 @@ export default function AccountSettings() {
         return;
       }
 
-      const res = await fetch("http://localhost:7000/api/auth/change-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.backendToken}`,
+      const res = await fetch(
+        "http://localhost:7000/api/auth/change-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.backendToken}`,
+          },
+          body: JSON.stringify({
+            currentPassword: form.currentPassword,
+            newPassword: form.newPassword,
+            confirmPassword: form.confirmPassword,
+          }),
         },
-        body: JSON.stringify({
-          currentPassword: form.currentPassword,
-          newPassword: form.newPassword,
-          confirmPassword: form.confirmPassword,
-        }),
-      });
+      );
 
-      debugger
       const data = await res.json();
 
       if (!res.ok) {
@@ -245,7 +251,6 @@ export default function AccountSettings() {
         newPassword: "",
         confirmPassword: "",
       }));
-
     } catch (error: any) {
       console.error("Change password error:", error);
       toast.error(error.message || "Something went wrong");
@@ -322,16 +327,16 @@ export default function AccountSettings() {
   return (
     <div className="flex justify-center">
       <div className="w-full  rounded-2xl shadow-xl flex">
-        {/* SIDEBAR */}
-        <div className="w-64 border-r p-3 position-fixed  text-black space-y-4">
+        <div className="w-64 border-r p-3 position-fixed  space-y-4">
           <h2 className="text-xl font-bold  mb-6">Settings</h2>
 
           {["profile", "Change Password", "Preferences"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`block w-full text-left px-4 py-2 text-black rounded-lg ${tab === t ? "bg-indigo-600 text-black" : "hover:bg-gray-500"
-                }`}
+              className={`block w-full text-left px-4 py-2 rounded-lg ${
+                tab === t ? "bg-indigo-600" : "hover:bg-gray-500"
+              }`}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
@@ -344,13 +349,11 @@ export default function AccountSettings() {
             {/* PROFILE TAB */}
             {tab === "profile" && (
               <>
-                <h1 className="text-xl font-semibold text-black mb-6">
-                  Profile Settings
-                </h1>
+                <h1 className="text-xl font-semibold mb-6">Profile Settings</h1>
 
                 {/* COMPLETION BAR */}
                 <div className="mb-6">
-                  <p className="text-sm text-black mb-2">
+                  <p className="text-sm mb-2">
                     Profile Completion {Math.round(completion)}%
                   </p>
 
@@ -379,7 +382,7 @@ export default function AccountSettings() {
                       onChange={handleImage}
                     />
 
-                    <div className="absolute bottom-0 right-0 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                    <div className="absolute bottom-0 right-0 bg-indigo-600 text-xs px-2 py-1 rounded-full">
                       Edit
                     </div>
                   </div>
@@ -469,7 +472,7 @@ export default function AccountSettings() {
                 <button
                   onClick={updateProfile}
                   disabled={loading}
-                  className="mt-8 w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-60"
+                  className="mt-8 w-full bg-indigo-600 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-60"
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </button>
@@ -479,9 +482,7 @@ export default function AccountSettings() {
             {/* SECURITY TAB */}
             {tab === "Change Password" && (
               <>
-                <h1 className="text-xl font-semibold text-black mb-6">
-                  Change Password
-                </h1>
+                <h1 className="text-xl font-semibold mb-6">Change Password</h1>
 
                 <div className="space-y-4">
                   {/* CURRENT PASSWORD */}
@@ -506,7 +507,11 @@ export default function AccountSettings() {
                             }
                             edge="end"
                           >
-                            {showPassword.current ? <VisibilityOff /> : <Visibility />}
+                            {showPassword.current ? (
+                              <VisibilityOff />
+                            ) : (
+                              <Visibility />
+                            )}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -535,7 +540,11 @@ export default function AccountSettings() {
                             }
                             edge="end"
                           >
-                            {showPassword.new ? <VisibilityOff /> : <Visibility />}
+                            {showPassword.new ? (
+                              <VisibilityOff />
+                            ) : (
+                              <Visibility />
+                            )}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -564,7 +573,11 @@ export default function AccountSettings() {
                             }
                             edge="end"
                           >
-                            {showPassword.confirm ? <VisibilityOff /> : <Visibility />}
+                            {showPassword.confirm ? (
+                              <VisibilityOff />
+                            ) : (
+                              <Visibility />
+                            )}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -575,7 +588,7 @@ export default function AccountSettings() {
                 <button
                   onClick={handleChangePassword}
                   disabled={loading}
-                  className="mt-8 w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-60"
+                  className="mt-8 w-full bg-indigo-600 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-60"
                 >
                   {loading ? "Updating..." : "Update Password"}
                 </button>
@@ -585,17 +598,13 @@ export default function AccountSettings() {
             {/* Preferences */}
             {tab === "Preferences" && (
               <>
-                <h1 className="text-xl font-semibold text-black mb-6">
-                  Preferences
-                </h1>
+                <h1 className="text-xl font-semibold mb-6">Preferences</h1>
 
                 <div className="space-y-6">
                   {/* BLOG NOTIFICATIONS */}
                   <div className="flex items-center justify-between border-b pb-4">
                     <div>
-                      <p className="font-medium text-black">
-                        New Blog Notifications
-                      </p>
+                      <p className="font-medium">New Blog Notifications</p>
                       <p className="text-sm text-gray-500">
                         Get notified when new blogs are published.
                       </p>
@@ -615,9 +624,7 @@ export default function AccountSettings() {
                   {/* EMAIL NOTIFICATIONS */}
                   <div className="flex items-center justify-between border-b pb-4">
                     <div>
-                      <p className="font-medium text-black">
-                        Email Notifications
-                      </p>
+                      <p className="font-medium">Email Notifications</p>
                       <p className="text-sm text-gray-500">
                         Receive important updates via email.
                       </p>
@@ -637,7 +644,7 @@ export default function AccountSettings() {
                   {/* DARK MODE */}
                   <div className="flex items-center justify-between border-b pb-4">
                     <div>
-                      <p className="font-medium text-black">Dark Mode</p>
+                      <p className="font-medium">Dark Mode</p>
                       <p className="text-sm text-gray-500">
                         Switch between light and dark theme.
                       </p>
@@ -657,7 +664,7 @@ export default function AccountSettings() {
                   {/* MARKETING EMAILS */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-black">Marketing Emails</p>
+                      <p className="font-medium">Marketing Emails</p>
                       <p className="text-sm text-gray-500">
                         Receive offers and announcements.
                       </p>
@@ -679,7 +686,7 @@ export default function AccountSettings() {
                 <button
                   disabled={loading}
                   onClick={savePreferences}
-                  className="mt-8 w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                  className="mt-8 w-full bg-indigo-600 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
                 >
                   {loading ? "Saving" : "Save Preferences"}
                 </button>
@@ -758,7 +765,7 @@ export default function AccountSettings() {
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             placeholder="Enter OTP"
-            className="w-full border rounded-lg px-3 py-2 mb-4 text-black"
+            className="w-full border rounded-lg px-3 py-2 mb-4"
           />
 
           <button
@@ -786,7 +793,7 @@ function Input({ label, ...props }: any) {
       <label className="label">{label}</label>
       <input
         {...props}
-        className="w-full border rounded-lg px-3 py-2 text-black bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="w-full border rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
     </div>
   );

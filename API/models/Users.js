@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema({
   name: { type: String, trim: true, },
   email: { type: String, required: true },
-  password: { type: String, required: true },
+  password: { type: String },
   image: {
     type: String,
     default: null,
@@ -23,6 +23,10 @@ const UserSchema = new mongoose.Schema({
   otpExpires: { type: Date },
   isVerified: { type: Boolean },
   subscription: { type: Number },
+  aiPlan: { type: String, default: "TRIAL" },
+  utilizeAi: { type: Boolean, default: true },
+  aiUsageCount: { type: Number, default: 0 },
+  aiUsageDate: { type: Date },
   preferences: {
     blogNotifications: { type: Boolean, default: true },
     emailNotifications: { type: Boolean, default: true },

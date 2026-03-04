@@ -1,8 +1,8 @@
-import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { NextAuthOptions } from "next-auth";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -46,40 +46,32 @@ export const authOptions = {
 
   callbacks: {
     async signIn({ user, account }) {
-      try {
-        if (account?.provider === "google") {
-
-          const res = await fetch(
-            "http://localhost:7000/api/auth/google-login",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                name: user.name,
-                email: user.email,
-                image: user.image,
-              }),
-            }
-          );
-
-          const data = await res.json();
-          if (!res.ok || !data?.token || !data?.user) {
-            return false;
+      if (account?.provider === "google") {
+        const res = await fetch(
+          "http://localhost:7000/api/auth/google-login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: user.name,
+              email: user.email,
+              image: user.image,
+            }),
           }
-          user._id = data.user._id;
-          user.preferences = data.user.preferences;
-          user.backendToken = data.token;
-        }
+        );
 
-        return true;
-      } catch (err) {
-        console.error("signIn error:", err);
-        return false;
+        const data = await res.json();
+        if (!res.ok || !data.success) return false;
+
+        user._id = data.user._id;
+        user.preferences = data.user.preferences;
+        user.backendToken = data.token;
       }
+
+      return true;
     },
 
     async jwt({ token, user, trigger, session }) {
-      // First login
       if (user) {
         token._id = user._id;
         token.name = user.name;
@@ -88,7 +80,6 @@ export const authOptions = {
         token.backendToken = user.backendToken;
       }
 
-      // When update() is called
       if (trigger === "update" && session?.user) {
         token.preferences = session.user.preferences;
       }
@@ -119,9 +110,4 @@ export const authOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-  trustHost: true,
 };
-
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };

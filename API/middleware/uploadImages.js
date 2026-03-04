@@ -2,10 +2,15 @@ const path = require("path");
 const multer = require("multer");
 const util = require("util");
 const fs = require("fs");
+
 const maxSize = 4 * 1024 * 1024;
+
 const FilePath = path.join(process.cwd(), process.env.DOCPATH);
-const fields = [{ name: "image", maxCount: 1 }];
-/* ================= FILE FILTER ================= */
+
+const fields = [
+  { name: "image", maxCount: 1 },
+  { name: "coverImage", maxCount: 1 },
+];
 
 const fileFilter = (req, file, cb) => {
   const allowed = ["image/png", "image/jpg", "image/jpeg", "image/x-icon"];
@@ -17,9 +22,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-let storage;
-
-storage = multer.diskStorage({
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userId = req.userId;
 
@@ -27,7 +30,7 @@ storage = multer.diskStorage({
       process.cwd(),
       process.env.DOCPATH,
       userId,
-      "Image",
+      "Image"
     );
 
     fs.mkdirSync(uploadPath, { recursive: true });
@@ -37,7 +40,23 @@ storage = multer.diskStorage({
 
   filename: (req, file, cb) => {
     const ext = file.mimetype.split("/")[1];
-    cb(null, `profile_${Date.now()}.${ext}`);
+
+    // Generate unique key
+    const uniqueKey = Date.now() + "_" + Math.round(Math.random() * 1e9);
+
+    if (file.fieldname === "image") {
+      const fileName = `profile_${uniqueKey}.${ext}`;
+      cb(null, fileName);
+    }
+
+    else if (file.fieldname === "coverImage") {
+      const fileName = `cover_${uniqueKey}.${ext}`;
+
+      // Save unique key so controller can use it
+      req.uniqueKeyCoverImg = fileName;
+
+      cb(null, fileName);
+    }
   },
 });
 

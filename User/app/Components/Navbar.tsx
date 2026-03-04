@@ -9,6 +9,7 @@ import Image from "next/image";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Close, Call } from "@mui/icons-material";
 
@@ -104,12 +105,13 @@ export default function Navbar() {
               >
                 <Call
                   style={{
-                    fontSize: scrollStage === 0 ? 40 : 28,
+                    fontSize: scrollStage === 0 ? 32 : 28,
                   }}
                 />
                 1-800-GROWTH
               </motion.a>
             </div>
+            {/* <ThemeToggle /> */}
 
             {/* CENTER — Logo */}
             <div className="flex justify-center">

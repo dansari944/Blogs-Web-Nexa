@@ -309,4 +309,225 @@ const sendResetPassword = async (email, name, resetLink) => {
   }
 };
 
-module.exports = { sendOtpMail, sendWelcomeMail, sendResetPassword };
+const sendMailConfirmation = async ({
+  title,
+  content,
+  categoryId,
+  subCategoryId,
+  userName,
+  blogId,
+  approvalToken,
+  approvalTokenExpires,
+}) => {
+  try {
+    const approveLink = `${process.env.FRONTEND_URL}/blog/approve?token=${approvalToken}`;
+
+    const mailOptions = {
+      from: `"Web-Nexa Support" <${process.env.EMAILID_FOR_OTP}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: "New Blog Submitted - Verification Required",
+      html: `
+<div style="background:#f4f6f8;padding:40px;font-family:Arial,sans-serif;">
+  <table width="100%" align="center">
+    <tr>
+      <td align="center">
+
+        <table width="520" style="
+          background:#ffffff;
+          padding:40px;
+          border-radius:12px;
+          box-shadow:0 6px 18px rgba(0,0,0,0.08);
+        ">
+
+          <tr>
+            <td align="center">
+              <h2 style="color:#4f46e5;margin:0;">
+                New Blog Submitted
+              </h2>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:20px;">
+
+              <p style="font-size:15px;color:#374151;">
+                A new blog has been submitted and requires verification before publishing.
+              </p>
+
+              <p style="font-size:15px;color:#374151;">
+                Please review the details below.
+              </p>
+
+              <h3 style="color:#111827;margin-top:20px;">Blog Details</h3>
+
+              <p style="font-size:14px;color:#374151;">
+                <strong>Title:</strong> ${title}
+              </p>
+
+              <p style="font-size:14px;color:#374151;">
+                <strong>Category:</strong> ${categoryId}
+              </p>
+
+              <p style="font-size:14px;color:#374151;">
+                <strong>SubCategory:</strong> ${subCategoryId}
+              </p>
+
+              <h3 style="color:#111827;margin-top:20px;">Content Preview</h3>
+
+              <div style="
+                padding:12px;
+                border:1px solid #e5e7eb;
+                border-radius:8px;
+                background:#fafafa;
+                font-size:14px;
+                color:#374151;
+                max-height:200px;
+                overflow:hidden;
+              ">
+                ${content.substring(0, 800)}...
+              </div>
+
+              <p style="font-size:14px;color:#6b7280;margin-top:15px;">
+                Click the button below to approve and publish this blog.
+              </p>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:25px 0;">
+              <a href="${approveLink}"
+                style="
+                  background:#4f46e5;
+                  color:white;
+                  padding:12px 24px;
+                  text-decoration:none;
+                  border-radius:8px;
+                  font-weight:bold;
+                ">
+                Approve Blog
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center">
+              <p style="font-size:12px;color:#9ca3af;">
+                Please review this blog carefully before approving. <br>
+                © ${new Date().getFullYear()} Web-Nexa — Creativity Without Limits
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</div>
+`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.log("error sendMailConfirmation: ", error);
+  }
+};
+
+const sendMailToUserThatBlogsIsLive = async ({ email, name, title, slug }) => {
+  try {
+    const blogLink = `${process.env.FRONTEND_URL}/blogs/${slug}`;
+
+    const mailOptions = {
+      from: `"Web-Nexa Support" <${process.env.EMAILID_FOR_OTP}>`,
+      to: email,
+      subject: "Your Blog is Now Live!",
+      html: `
+<div style="background:#f4f6f8;padding:40px;font-family:Arial,sans-serif;">
+  <table width="100%" align="center">
+    <tr>
+      <td align="center">
+
+        <table width="520" style="
+          background:#ffffff;
+          padding:40px;
+          border-radius:12px;
+          box-shadow:0 6px 18px rgba(0,0,0,0.08);
+        ">
+
+          <tr>
+            <td align="center">
+              <h2 style="color:#4f46e5;margin:0;">
+                🎉 Your Blog is Live!
+              </h2>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:20px;">
+
+              <p style="font-size:15px;color:#374151;">
+                Hi <b>${name}</b>,
+              </p>
+
+              <p style="font-size:15px;color:#374151;">
+                Congratulations! Your blog has been successfully published on <b>Web-Nexa</b>.
+              </p>
+
+              <p style="font-size:15px;color:#374151;">
+                <strong>Blog Title:</strong> ${title}
+              </p>
+
+              <p style="font-size:15px;color:#6b7280;">
+                Your content is now live and available for readers.
+              </p>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:25px 0;">
+              <a href="${blogLink}"
+                style="
+                  background:#16a34a;
+                  color:white;
+                  padding:12px 24px;
+                  text-decoration:none;
+                  border-radius:8px;
+                  font-weight:bold;
+                ">
+                View Your Blog
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center">
+              <p style="font-size:12px;color:#9ca3af;">
+                Thank you for contributing to Web-Nexa. <br>
+                © ${new Date().getFullYear()} Web-Nexa — Creativity Without Limits
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</div>
+`,
+    };
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.log("error sendMailToUserThatBlogsIsLive: ", error);
+  }
+};
+
+module.exports = {
+  sendOtpMail,
+  sendWelcomeMail,
+  sendResetPassword,
+  sendMailConfirmation,
+  sendMailToUserThatBlogsIsLive,
+};

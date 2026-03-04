@@ -26,12 +26,12 @@ exports.register = async (req, res) => {
       isVerified: false,
       password: hashedPassword,
       otp,
-      otpExpires: Date.now() + 5 * 60 * 1000, // 5 min
+      otpExpires: Date.now() + 5 * 60 * 1000, 
       provider: "credentials",
     });
     await sendOtpMail(email, otp);
 
-    res.json({ success: true, user });
+    return res.json({ success: true, user });
   } catch (error) {
     console.log("error register : ", error);
   }
@@ -50,9 +50,9 @@ exports.verifyOTP = async (req, res) => {
       });
     }
 
-    // If already verified → still allow login
+    
     if (user.isVerified) {
-      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      const token = jwt.sign({ userId: user._id, name: user?.name }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
 
@@ -66,7 +66,7 @@ exports.verifyOTP = async (req, res) => {
       });
     }
 
-    // OTP check
+    
     if (user.otp !== otp) {
       return res.status(400).json({
         success: false,
@@ -74,7 +74,7 @@ exports.verifyOTP = async (req, res) => {
       });
     }
 
-    // Expiry check
+    
     if (user.otpExpires < Date.now()) {
       return res.status(400).json({
         success: false,
@@ -82,22 +82,22 @@ exports.verifyOTP = async (req, res) => {
       });
     }
 
-    // Mark verified
+    
     user.isVerified = true;
     user.otp = null;
     user.otpExpires = null;
 
     await user.save();
 
-    // Send welcome mail (after save)
+    
     try {
       await sendWelcomeMail(email, user?.name);
     } catch (err) {
       console.log("Mail failed:", err);
     }
 
-    // 🔥 Generate JWT (IMPORTANT)
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    
+    const token = jwt.sign({ userId: user._id, name: user?.name }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -144,15 +144,15 @@ exports.login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id, name: user?.name }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // 6️⃣ Remove password before sending
+    
     const userData = user.toObject();
     delete userData.password;
 
-    // 7️⃣ Return SAME STRUCTURE AS GOOGLE
+    
     return res.status(200).json({
       success: true,
       token,
@@ -190,7 +190,7 @@ exports.resendOTP = async (req, res) => {
 
     await sendOtpMail(email, otp);
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
     console.log("error resendOTP: ", error);
   }
@@ -255,11 +255,11 @@ exports.userGoogle = async (req, res) => {
       }
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id, name: user?.name }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    res.json({ token, user });
+    return res.json({ token, user });
   } catch (error) {
     console.log("error userGoogle : ", error);
   }
@@ -278,7 +278,7 @@ exports.changePassword = async (req, res) => {
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
     console.log("error changePassword : ", error);
   }
@@ -291,19 +291,19 @@ exports.sendResetPasswordMail = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Create a secure token for password reset
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    
+    const token = jwt.sign({ userId: user._id, name: user?.name }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });
 
-    // Generate the password reset link
+    
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-    // Send the email to the user
+    
     await sendResetPassword(user?.email, user?.name, resetLink);
 
-    // Return success response
-    res.json({ message: "Password reset email sent" });
+    
+    return res.json({ message: "Password reset email sent" });
   } catch (error) {
     console.log("error sendResetPasswordMail : ", error);
   }

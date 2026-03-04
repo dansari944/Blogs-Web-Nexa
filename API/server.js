@@ -23,7 +23,6 @@ app.use(
     path.join(process.cwd(), process.env.DOCPATH)
   )
 );
-
 app.use(express.json());
 connectDB()
 app.use("/api/auth", require("./routes/auth.routes.js"));
